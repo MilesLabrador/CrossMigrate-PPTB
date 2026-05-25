@@ -1,0 +1,96 @@
+@import '@xyflow/react/dist/style.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  background: #0f1117;
+  overscroll-behavior-x: none;
+}
+
+.react-flow__background {
+  background-color: #0f1117 !important;
+}
+
+.react-flow__edge-path {
+  stroke: #5b6280;
+  stroke-width: 1.5;
+}
+.react-flow__edge.running .react-flow__edge-path {
+  stroke: #38bdf8;
+  stroke-dasharray: 6 4;
+  animation: dashFlow 0.6s linear infinite;
+}
+@keyframes dashFlow {
+  to { stroke-dashoffset: -10; }
+}
+
+.react-flow__handle {
+  width: 14px;
+  height: 14px;
+  border: 2.5px solid #0f1117;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.react-flow__handle:hover {
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.25);
+  cursor: crosshair;
+}
+.react-flow__handle-left:hover   { transform: translate(-50%, -50%) scale(1.45); }
+.react-flow__handle-right:hover  { transform: translate(50%,  -50%) scale(1.45); }
+.react-flow__handle-top:hover    { transform: translate(-50%, -50%) scale(1.45); }
+.react-flow__handle-bottom:hover { transform: translate(-50%,  50%) scale(1.45); }
+.handle-source {
+  background: #22c55e;
+}
+.handle-source:hover {
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.3);
+}
+.handle-transform {
+  background: #94a3b8;
+}
+.handle-destination {
+  background: #f43f5e;
+}
+.handle-destination:hover {
+  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.3);
+}
+
+.react-flow__minimap {
+  background: #1a1d2b !important;
+  border-radius: 8px;
+  border: 1px solid #2a304a;
+}
+.react-flow__controls {
+  background: #1a1d2b !important;
+  border-radius: 8px;
+  border: 1px solid #2a304a;
+  overflow: hidden;
+}
+.react-flow__controls-button {
+  background: #1a1d2b !important;
+  color: #cbd5e1 !important;
+  border-bottom: 1px solid #2a304a !important;
+}
+.react-flow__controls-button:hover {
+  background: #252a3d !important;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #0f1117; }
+::-webkit-scrollbar-thumb { background: #2a304a; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #3a4060; }
+
+@keyframes scale-in {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.animate-scale-in { animation: scale-in 0.15s ease-out; }
+
+@keyframes slide-in-right {
+  from { transform: translateX(20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.animate-slide-in-right { animation: slide-in-right 0.2s ease-out; }

@@ -1,0 +1,40 @@
+{
+  "name": "crossmigrate-pptb",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "CrossMigrate visual ETL tool for Power Platform ToolBox",
+  "features": {
+    "multiConnection": "optional",
+    "minAPI": "1.2.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@pptb/types": "latest",
+    "@xyflow/react": "^12.3.5",
+    "clsx": "^2.1.1",
+    "dayjs": "^1.11.13",
+    "fastest-levenshtein": "^1.0.16",
+    "lucide-react": "^0.456.0",
+    "nanoid": "^5.0.8",
+    "papaparse": "^5.4.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "xlsx": "^0.18.5",
+    "zustand": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.7.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  }
+}

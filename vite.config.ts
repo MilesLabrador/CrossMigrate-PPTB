@@ -6,6 +6,9 @@ import react from '@vitejs/plugin-react';
 function pptbHtmlPlugin(): Plugin {
   return {
     name: 'pptb-html-transform',
+    // Only rewrite HTML for the production build. In dev, stripping
+    // type="module" breaks Vite's client + React Refresh preamble.
+    apply: 'build',
     enforce: 'post',
     transformIndexHtml(html) {
       // Remove module attributes and move scripts to end of body

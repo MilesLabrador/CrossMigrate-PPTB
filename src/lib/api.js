@@ -254,7 +254,6 @@ function executeNode(node, inputRows) {
     case 'xlsxInput':
     case 'manualData':
     case 'dataverseInput':
-    case 'dataverseView':
       return result(node.data?.rows || [], node.data?.columns);
     case 'selectColumns':
       return result(selectColumns(rows, cfg.columns || []));

@@ -13,7 +13,6 @@ import {
   Download,
   Eye,
   TableProperties,
-  LayoutList,
   BarChart2,
 } from 'lucide-react';
 
@@ -22,8 +21,7 @@ export const PALETTE = [
     group: 'Sources',
     accent: 'text-emerald-400',
     items: [
-      { type: 'dataverseInput', label: 'Dataverse Input', icon: DatabaseZap,  desc: 'Fetch rows from Dataverse' },
-      { type: 'dataverseView',  label: 'Dataverse View',  icon: LayoutList,   desc: 'Fetch using a saved Power Platform view' },
+      { type: 'dataverseInput', label: 'Dataverse Input', icon: DatabaseZap,  desc: 'Fetch rows from Dataverse (columns or a saved view)' },
       { type: 'csvInput',       label: 'CSV Input',       icon: FileSpreadsheet, desc: 'Upload a CSV file' },
       { type: 'xlsxInput',      label: 'XLSX Input',      icon: Sheet,           desc: 'Upload an Excel workbook' },
       { type: 'manualData',     label: 'Manual Data',     icon: Pencil,          desc: 'Type rows by hand' },

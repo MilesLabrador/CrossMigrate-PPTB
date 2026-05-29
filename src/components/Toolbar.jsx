@@ -3,7 +3,7 @@ import { Save, Download, Upload, Play, Trash2, Loader2, CheckCircle2, AlertCircl
 import { usePipelineStore } from '../store/usePipelineStore';
 import { runPipelineStream, fetchDataverseRows, fetchDataverseView } from '../lib/api';
 
-const SOURCE_TYPES = new Set(['csvInput', 'manualData', 'dataverseInput', 'dataverseView']);
+const SOURCE_TYPES = new Set(['csvInput', 'manualData', 'dataverseInput']);
 
 export default function Toolbar() {
   const {
@@ -70,8 +70,10 @@ export default function Toolbar() {
 
     const unconfigured = nodes.filter(
       (n) =>
-        (n.type === 'dataverseInput' && !n.data?.config?.entity) ||
-        (n.type === 'dataverseView'  && (!n.data?.config?.entity || !n.data?.config?.fetchXml))
+        n.type === 'dataverseInput' &&
+        (n.data?.config?.mode === 'view'
+          ? (!n.data?.config?.entity || !n.data?.config?.fetchXml)
+          : !n.data?.config?.entity)
     );
     if (unconfigured.length) {
       const first = unconfigured[0];
@@ -86,8 +88,9 @@ export default function Toolbar() {
 
     const unfetched = nodes.filter(
       (n) =>
-        (n.type === 'dataverseInput' && n.data?.config?.entity   && !(n.data?.rows?.length)) ||
-        (n.type === 'dataverseView'  && n.data?.config?.fetchXml && !(n.data?.rows?.length))
+        n.type === 'dataverseInput' &&
+        !(n.data?.rows?.length) &&
+        (n.data?.config?.mode === 'view' ? n.data?.config?.fetchXml : n.data?.config?.entity)
     );
     if (unfetched.length) {
       showBanner('ok', `Auto-fetching ${unfetched.length} Dataverse source${unfetched.length > 1 ? 's' : ''}…`, 0);
@@ -95,10 +98,11 @@ export default function Toolbar() {
         try {
           const cfg = n.data.config;
           let result;
-          if (n.type === 'dataverseView') {
+          if (cfg.mode === 'view') {
             result = await fetchDataverseView({
               entityCollection: cfg.entity,
               savedQueryId:     cfg.viewId,
+              top:              cfg.top || 5000,
               viewColumns:      cfg.viewColumns || [],
             });
           } else {

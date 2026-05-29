@@ -7,8 +7,7 @@ const ENV_KEY = 'crossmigrate:environments';
 const STORAGE_KEY = 'crossmigrate:pipeline';
 
 export const NODE_DEFAULTS = {
-  dataverseInput: { config: { orgUrl: '', entity: '', select: '', filter: '', top: 5000 }, rows: [], columns: [] },
-  dataverseView:  { config: { orgUrl: '', entity: '', entityLogicalName: '', entityDisplayName: '', viewId: '', viewName: '', fetchXml: '', viewColumns: [] }, rows: [], columns: [] },
+  dataverseInput: { config: { mode: 'columns', orgUrl: '', entity: '', entityLogicalName: '', entityDisplayName: '', select: '', filter: '', top: 5000, viewId: '', viewName: '', fetchXml: '', viewColumns: [] }, rows: [], columns: [] },
   xlsxInput: { config: { header: true }, rows: [], columns: [] },
   csvInput: { config: {}, rows: [], columns: [] },
   manualData: {
@@ -205,7 +204,6 @@ function prettyName(type) {
   return (
     {
       dataverseInput: 'Dataverse Input',
-      dataverseView:  'Dataverse View',
       xlsxInput: 'XLSX Input',
       csvInput: 'CSV Input',
       manualData: 'Manual Data',

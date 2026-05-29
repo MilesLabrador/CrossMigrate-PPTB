@@ -1,9 +1,15 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Search, ChevronDown, Check, Loader2 } from 'lucide-react';
 import { usePipelineStore } from '../../store/usePipelineStore';
-import { fetchEntities, fetchEntityFields } from '../../lib/api';
+import { fetchEntities, fetchEntityFields, fetchViews } from '../../lib/api';
 import { getCachedEntities as getCached, setCachedEntities as setCached } from '../../lib/entityCache';
 import clsx from 'clsx';
+
+/** Extract logical attribute names from FetchXML <attribute name="..."/> elements. */
+function parseColumnsFromFetchXml(xml) {
+  if (!xml) return [];
+  return [...xml.matchAll(/<attribute\s+name="([^"]+)"/g)].map((m) => m[1]);
+}
 
 function MaxRowsInput({ value, onChange }) {
   const [local, setLocal] = React.useState(String(value));
@@ -47,6 +53,8 @@ export default function DataverseInputConfig({ nodeId }) {
   const node = nodes.find((n) => n.id === nodeId);
   const cfg  = node?.data?.config || {};
 
+  const mode = cfg.mode === 'view' ? 'view' : 'columns';
+
   const [entities, setEntities]         = useState([]);
   const [entitiesLoading, setEntitiesLoading] = useState(false);
   const [entitiesError, setEntitiesError]     = useState(null);
@@ -89,9 +97,13 @@ export default function DataverseInputConfig({ nodeId }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entities]);
 
+  const [views, setViews]             = useState([]);
+  const [viewsLoading, setViewsLoading] = useState(false);
+  const [viewsError, setViewsError]   = useState(null);
+
   const entityKey = cfg.entityLogicalName || cfg.entity;
   useEffect(() => {
-    if (!entityKey) { setFields([]); return; }
+    if (mode !== 'columns' || !entityKey) { setFields([]); return; }
     setFieldsLoading(true);
     fetchEntityFields(entityKey)
       .then((f) => {
@@ -108,7 +120,18 @@ export default function DataverseInputConfig({ nodeId }) {
       .catch(() => setFields([]))
       .finally(() => setFieldsLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entityKey]);
+  }, [mode, entityKey]);
+
+  // View picker — load public/saved views for the selected table (view mode only)
+  useEffect(() => {
+    if (mode !== 'view' || !cfg.entityLogicalName) { setViews([]); return; }
+    setViewsLoading(true);
+    setViewsError(null);
+    fetchViews(cfg.entityLogicalName)
+      .then(setViews)
+      .catch((e) => setViewsError(e.message))
+      .finally(() => setViewsLoading(false));
+  }, [mode, cfg.entityLogicalName]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -132,10 +155,26 @@ export default function DataverseInputConfig({ nodeId }) {
       select: '',
       filter: cfg.filter || '',
       top:    cfg.top    || 5000,
+      // reset view selection — it's tied to the previous entity
+      viewId: '', viewName: '', fetchXml: '', viewColumns: [],
     });
     setSelectedFields([]);
     setEntitySearch('');
     setEntityOpen(false);
+  };
+
+  const chooseView = (v) => {
+    updateNodeConfig(nodeId, {
+      viewId:      v.id,
+      viewName:    v.name,
+      fetchXml:    v.fetchXml,
+      viewColumns: parseColumnsFromFetchXml(v.fetchXml),
+    });
+  };
+
+  const setMode = (next) => {
+    if (next === mode) return;
+    updateNodeConfig(nodeId, { mode: next });
   };
 
   const chooseEntityByCollectionName = (collectionName) => {
@@ -159,6 +198,38 @@ export default function DataverseInputConfig({ nodeId }) {
 
   return (
     <div className="space-y-5 text-xs">
+      {/* Query mode toggle */}
+      <div>
+        <label className="block text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1.5">
+          Query By
+        </label>
+        <div className="flex rounded-lg border border-slate-700 overflow-hidden">
+          {[
+            { key: 'columns', label: 'Columns' },
+            { key: 'view',    label: 'Saved View' },
+          ].map((m) => (
+            <button
+              key={m.key}
+              type="button"
+              onClick={() => setMode(m.key)}
+              className={clsx(
+                'flex-1 px-3 py-1.5 text-[11px] font-medium transition',
+                mode === m.key
+                  ? 'bg-emerald-700/40 text-emerald-200'
+                  : 'bg-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-700/60'
+              )}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+        <p className="text-[10px] text-slate-600 mt-1">
+          {mode === 'view'
+            ? 'Fetch rows defined by a saved Power Platform view (FetchXML).'
+            : 'Pick columns and an optional OData filter to build the query.'}
+        </p>
+      </div>
+
       {/* Entity picker */}
       <div>
         <label className="block text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1.5">
@@ -185,7 +256,7 @@ export default function DataverseInputConfig({ nodeId }) {
         ) : null}
       </div>
 
-      {cfg.entity && (
+      {mode === 'columns' && cfg.entity && (
         <>
           {/* Column selector */}
           <div>
@@ -239,6 +310,56 @@ export default function DataverseInputConfig({ nodeId }) {
               className="w-full px-3 py-2 rounded bg-slate-800 border border-slate-700 hover:border-slate-500 focus:border-sky-500 text-slate-200 outline-none transition font-mono text-[11px]"
             />
           </div>
+
+          {/* Max rows */}
+          <MaxRowsInput
+            value={cfg.top ?? 5000}
+            onChange={(v) => updateNodeConfig(nodeId, { top: v })}
+          />
+        </>
+      )}
+
+      {/* View mode */}
+      {mode === 'view' && cfg.entityLogicalName && (
+        <>
+          <div>
+            <label className="block text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1.5">
+              View
+            </label>
+            <select
+              value={cfg.viewId || ''}
+              onChange={(e) => {
+                const v = views.find((view) => view.id === e.target.value);
+                if (v) chooseView(v);
+                else updateNodeConfig(nodeId, { viewId: '', viewName: '', fetchXml: '', viewColumns: [] });
+              }}
+              disabled={viewsLoading || !!viewsError}
+              className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 hover:border-slate-500 focus:border-sky-500 outline-none disabled:opacity-60"
+            >
+              <option value="">{viewsLoading ? 'Loading views…' : 'Choose a view…'}</option>
+              {views.map((v) => (
+                <option key={v.id} value={v.id}>{v.name}</option>
+              ))}
+            </select>
+            {viewsError && (
+              <p className="text-rose-400 text-[10px] mt-1 break-all">{viewsError}</p>
+            )}
+            {!viewsLoading && !viewsError && views.length === 0 && (
+              <p className="text-slate-500 text-[10px] mt-1 italic">No public views found for this table.</p>
+            )}
+          </div>
+
+          {/* FetchXML preview */}
+          {cfg.fetchXml && (
+            <div>
+              <label className="block text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1.5">
+                FetchXML (read-only)
+              </label>
+              <pre className="bg-slate-900 border border-slate-700 rounded px-3 py-2 text-[10px] text-slate-400 overflow-auto max-h-32 whitespace-pre-wrap break-all font-mono">
+                {cfg.fetchXml}
+              </pre>
+            </div>
+          )}
 
           {/* Max rows */}
           <MaxRowsInput
